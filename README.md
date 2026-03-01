@@ -90,11 +90,3 @@ safeguard_sentinel/
 ## 📄 License
 MIT
 ```
-
----
-
-**GitHub Topics to add** (under the repo description):
-```
-robotics  ai-safety  computer-vision  yolov8  fastapi  
-streamlit  autonomous-systems  human-in-the-loop  
-python  anthropic  real-time  hackathon
