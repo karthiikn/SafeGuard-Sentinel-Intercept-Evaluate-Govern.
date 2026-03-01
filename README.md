@@ -1,4 +1,4 @@
-# 🛡️ SafeGuard Sentinel
+# SafeGuard Sentinel
 ### AI Governance Layer for Autonomous Robotics
 
 > **Intercept · Evaluate · Govern**  
