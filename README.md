@@ -89,4 +89,3 @@ safeguard_sentinel/
 
 ## 📄 License
 MIT
-```
