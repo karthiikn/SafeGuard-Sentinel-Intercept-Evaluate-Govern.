@@ -1,176 +1,100 @@
 # 🛡️ SafeGuard Sentinel
 ### AI Governance Layer for Autonomous Robotics
 
-A real-time AI "conscience layer" that intercepts robot actions, analyzes the
-environment with computer vision, and applies safety policies before allowing
-execution — making autonomous systems explainably safe.
+> **Intercept · Evaluate · Govern**  
+> Because autonomous systems should never act without oversight.
 
----
+![Python](https://img.shields.io/badge/Python-3.10+-blue?style=flat-square)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.110-green?style=flat-square)
+![YOLOv8](https://img.shields.io/badge/YOLOv8-Ultralytics-red?style=flat-square)
+![Claude AI](https://img.shields.io/badge/Claude-Anthropic-orange?style=flat-square)
+![Streamlit](https://img.shields.io/badge/Streamlit-1.33-pink?style=flat-square)
 
-## Architecture
+SafeGuard Sentinel is a real-time AI safety layer that sits between 
+an autonomous robot and its actions. Every proposed action is 
+intercepted, analyzed with computer vision, evaluated against safety 
+policies, and either ALLOWED, WARNED, or BLOCKED — before a single 
+motor turns.
 
-```
-Robot Agent
-    │
-    ▼  POST /evaluate
-┌─────────────────────────────────────────────────┐
-│            FastAPI Intercept Layer (api.py)      │
-│                                                  │
-│  ┌──────────────────┐  ┌────────────────────┐   │
-│  │  Vision Module   │  │  Safety Policy     │   │
-│  │  (vision_module) │  │  Engine            │   │
-│  │                  │  │  (safety_engine)   │   │
-│  │  YOLOv8 + OpenCV │  │  8 rule checks     │   │
-│  │  Human detection │  │  Risk scoring      │   │
-│  │  Distance zones  │  │  ALLOW/WARN/BLOCK  │   │
-│  └──────────────────┘  └────────────────────┘   │
-│                                                  │
-│  ┌──────────────────┐                           │
-│  │  LLM Reasoner    │  ← Optional (Claude API)  │
-│  │  (llm_reasoner)  │                           │
-│  │  Natural lang.   │                           │
-│  │  explanations    │                           │
-│  └──────────────────┘                           │
-│                                                  │
-│  ┌──────────────────────────────┐               │
-│  │  WebSocket broadcast         │ → Dashboard   │
-│  └──────────────────────────────┘               │
-└─────────────────────────────────────────────────┘
-    │
-    ▼  JSON: verdict + risk_score + reasoning
-Robot executes ONLY if verdict = "ALLOW"
-```
+## 🎯 The Problem
+Autonomous robots act freely with no real-time oversight layer.
+When accidents happen, there's no record of why. Humans are cut 
+out of the loop entirely.
 
----
+## ✅ Our Solution
+SafeGuard Sentinel intercepts every action before execution:
 
-## Quick Start
+Robot proposes action → Vision analyzes scene → Policy engine 
+evaluates risk → LLM explains decision → ALLOW or BLOCK
 
-### 1. Install dependencies
-```bash
+## 🚀 Quick Start
+
+​```bash
+# 1. Install
 pip install -r requirements.txt
-```
 
-### 2. (Optional) Set your Anthropic API key for LLM explanations
-```bash
-export ANTHROPIC_API_KEY=your_key_here
-```
+# 2. Start API
+uvicorn api:app --port 8000
 
-### 3. Start the API server
-```bash
-uvicorn api:app --host 0.0.0.0 --port 8000 --reload
-```
-
-### 4. Start the dashboard (new terminal)
-```bash
+# 3. Start Dashboard
 streamlit run dashboard.py
-```
 
-### 5. Run the robot simulator (new terminal)
-```bash
-# Structured demo sequence (recommended for hackathon)
+# 4. Run Robot Simulator
 python robot_sim.py
+​```
 
-# Continuous random mode
-python robot_sim.py continuous
-```
+## 🔑 Optional: LLM Explanations
+​```bash
+export ANTHROPIC_API_KEY=your_key_here
+​```
 
----
+## 📁 Project Structure
 
-## API Reference
-
-### `POST /evaluate`
-Submit a proposed robot action for safety evaluation.
-
-**Request:**
-```json
-{
-  "action_type": "MOVE_FORWARD",
-  "parameters": { "speed": 1.5, "distance_m": 2.0 },
-  "agent_id": "robot_01"
-}
-```
-
-**Response:**
-```json
-{
-  "request_id": "a1b2c3d4",
-  "verdict": "BLOCK",
-  "risk_score": 0.95,
-  "reasoning": "Human detected at NEAR range...",
-  "llm_explanation": "The forward movement has been blocked...",
-  "violations": [
-    {
-      "rule_id": "HUMAN_PROXIMITY_CRITICAL",
-      "severity": "critical",
-      "description": "Human at NEAR range — collision risk"
-    }
-  ],
-  "recommended_alternative": "STOP and wait for humans to clear",
-  "scene_summary": {
-    "human_count": 1,
-    "obstacle_count": 0,
-    "nearest_human": "near"
-  }
-}
-```
-
-### `GET /scene` — Latest scene snapshot
-### `GET /history?limit=20` — Decision history
-### `GET /health` — System status
-### `WS  /ws` — Real-time WebSocket stream
-
----
-
-## Safety Rules
-
-| Rule ID | Trigger | Severity | Action |
-|---|---|---|---|
-| HUMAN_PROXIMITY_CRITICAL | Human at NEAR range + motion | critical | BLOCK |
-| HUMAN_PROXIMITY_WARNING | Human at MID range + motion | warning | WARN |
-| CROWDED_SCENE | 2+ humans + any motion | warning | WARN |
-| EXCESSIVE_SPEED_HUMAN_PRESENT | Speed > 1.5m/s + human | critical | BLOCK |
-| EXCESSIVE_SPEED | Speed > 2.5m/s | warning | WARN |
-| GRIPPER_HUMAN_NEAR | Gripper close + human near | critical | BLOCK |
-| ARM_EXTEND_OBSTRUCTED | Arm extend + human/obstacles | critical/warning | BLOCK/WARN |
-| SPEED_INCREASE_BLOCKED | Speed++ + occupied scene | critical/warning | BLOCK/WARN |
-
----
-
-## Vision Modes
-
-- **Live mode**: Webcam + YOLOv8n inference (~30ms/frame)
-- **Simulation mode**: Procedural scene generation (no camera needed)
-
-Auto-detected at startup. Falls back to simulation if no camera or YOLO unavailable.
-
----
-
-## File Structure
-
-```
+​```
 safeguard_sentinel/
-├── api.py              # FastAPI backend (main intercept layer)
-├── vision_module.py    # YOLOv8 + OpenCV + simulation
-├── safety_engine.py    # Rule-based safety policy engine
-├── llm_reasoner.py     # Claude API reasoning layer
-├── dashboard.py        # Streamlit monitoring UI
+├── api.py              # FastAPI backend — main intercept layer
+├── vision_module.py    # YOLOv8 + OpenCV detection
+├── safety_engine.py    # 8-rule safety policy engine
+├── llm_reasoner.py     # Claude AI explanation layer
+├── zone_manager.py     # Spatial zone mapping
+├── fleet_manager.py    # Multi-robot fleet tracking
+├── override_manager.py # Human override + audit trail
+├── dashboard.py        # Streamlit live dashboard
 ├── robot_sim.py        # Demo robot agent simulator
-├── requirements.txt
-└── README.md
+└── requirements.txt
+​```
+
+## 🛡️ Safety Rules
+
+| Rule | Trigger | Verdict |
+|------|---------|---------|
+| HUMAN_PROXIMITY_CRITICAL | Human at NEAR range + motion | BLOCK |
+| EXCESSIVE_SPEED_HUMAN_PRESENT | Speed >1.5m/s near human | BLOCK |
+| GRIPPER_HUMAN_NEAR | Gripper close + human nearby | BLOCK |
+| HUMAN_PROXIMITY_WARNING | Human at MID range | WARN |
+| CROWDED_SCENE | 2+ humans detected | WARN |
+| ARM_EXTEND_OBSTRUCTED | Arm extend + obstacles | WARN/BLOCK |
+| SPEED_INCREASE_BLOCKED | Speed++ in occupied scene | WARN/BLOCK |
+
+## ⚡ Key Features
+- **Zone Mapping** — draw RESTRICTED/WARNING/SAFE zones on camera feed
+- **Multi-Robot Fleet** — track multiple agents with fleet-level safety rules
+- **Human Override** — operators challenge BLOCK decisions with full audit trail
+- **LLM Explanations** — Claude AI explains every decision in plain English
+- **Simulation Mode** — works without hardware, auto-detects webcam
+
+## 🏗️ Built With
+- Python · FastAPI · Streamlit · YOLOv8 · OpenCV
+- Anthropic Claude API · WebSocket · Pydantic
+
+## 📄 License
+MIT
 ```
 
 ---
 
-## Hackathon Demo Script
-
-1. **Start the API** → `uvicorn api:app --port 8000`
-2. **Open dashboard** → `streamlit run dashboard.py` → browser auto-opens
-3. **Run structured demo** → `python robot_sim.py` (shows ALLOW → WARN → BLOCK pipeline)
-4. **Switch to continuous mode** → `python robot_sim.py continuous`
-5. **Enable "Auto-Simulation"** in dashboard sidebar for live updates
-6. **Key talking points:**
-   - Vision module detects humans in real-time (or simulation)
-   - 8 safety rules evaluate every action before execution
-   - LLM generates human-readable explanations
-   - Dashboard shows live risk scores, violations, history
-   - Zero latency for STOP commands (always ALLOW)
+**GitHub Topics to add** (under the repo description):
+```
+robotics  ai-safety  computer-vision  yolov8  fastapi  
+streamlit  autonomous-systems  human-in-the-loop  
+python  anthropic  real-time  hackathon
